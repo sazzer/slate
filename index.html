@@ -91,7 +91,7 @@
       <script src="javascripts/all.js"></script>
   </head>
 
-  <body class="index" data-languages="[&quot;http&quot;,&quot;json&quot;]">
+  <body class="index" data-languages="[&quot;json&quot;]">
     <a href="#" id="nav-button">
       <span>
         NAV
@@ -101,7 +101,6 @@
     <div class="tocify-wrapper">
       <img src="images/logo.png" />
         <div class="lang-selector">
-              <a href="#" data-language-name="http">http</a>
               <a href="#" data-language-name="json">json</a>
         </div>
         <div class="search">
@@ -126,44 +125,95 @@
           <h1 id="discovery">Discovery</h1>
 
 <h2 id="webfinger">WebFinger</h2>
-
-<p>Discovery of the WebSockets MUD API starts with a <a href="https://webfinger.net/">WebFinger</a> request to the domain running the MUD. In the WebFinger response, a <em>rel</em> of <em>urn:mud:websocket</em>. The <em>resource</em> parameter is not important, but might be important for other WebFinger resources on the same domain, such as OpenID Connect.</p>
 <pre class="highlight http"><code><span class="nf">GET</span> <span class="nn">/.well-known/webfinger?resource=acct%3Amudadmin%40mud.example.com&amp;rel=urn%3Amud%3Awebsocket</span> <span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span>
 <span class="na">Host</span><span class="p">:</span> <span class="s">mud.example.com</span>
 <span class="na">Accept</span><span class="p">:</span> <span class="s">application/jrd+json</span>
 </code></pre>
 
-<p>A successful response to this will return a JSON Resource Descriptor including the base URL for the actual MUD server, under which the MUD Introspection Document can be loaded.</p>
+<p>Discovery of the WebSockets MUD API starts with a <a href="https://webfinger.net/">WebFinger</a> request to the domain running the MUD. In the WebFinger response, a <em>rel</em> of <em>urn:mud:websocket</em>. The <em>resource</em> parameter is not important, but might be important for other WebFinger resources on the same domain, such as OpenID Connect.</p>
 <pre class="highlight http"><code><span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
 <span class="na">Content-Type</span><span class="p">:</span> <span class="s">application/jrd+json</span>
-
-  {
-   "subject": "mudadmin@mud.example.com",
-   "links":
-    [
-     {
-      "rel": "urn:mud:websocket",
-      "href": "https://mud.example.com"
-     }
-    ]
-  }
 </code></pre>
-<pre class="highlight json"><code><span class="w">  </span><span class="p">{</span><span class="w">
-   </span><span class="nt">"subject"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mudadmin@mud.example.com"</span><span class="p">,</span><span class="w">
-   </span><span class="nt">"links"</span><span class="p">:</span><span class="w">
-    </span><span class="p">[</span><span class="w">
-     </span><span class="p">{</span><span class="w">
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="nt">"subject"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mudadmin@mud.example.com"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"links"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
       </span><span class="nt">"rel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"urn:mud:websocket"</span><span class="p">,</span><span class="w">
       </span><span class="nt">"href"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://mud.example.com"</span><span class="w">
-     </span><span class="p">}</span><span class="w">
-    </span><span class="p">]</span><span class="w">
-  </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
 </span></code></pre>
+
+<p>A successful response to this will return a JSON Resource Descriptor including the base URL for the actual MUD server, under which the MUD Introspection Document can be loaded.</p>
+
+<h2 id="introspection">Introspection</h2>
+
+<p>The MUD Introspection Document is a JSON Document that describes all of the details of the MUD that any particular client might need to know in order to work with it. These are not strictly aimed at interactive clients, though obviously they are a major use case, but can also be aimed at other forms of client that might aggregate data together or display semi-static data - e.g. the MUD web site might make use of it.</p>
+<pre class="highlight http"><code><span class="nf">GET</span> <span class="nn">/.well-known/mud-configuration</span> <span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="p">:</span> <span class="s">mud.example.com</span>
+<span class="na">Accept</span><span class="p">:</span> <span class="s">application/json</span>
+</code></pre>
+
+<p>The Introspection document is always available at a path of <em>/.well-known/mud-configuration</em> underneath the HREF returned by the WebFinger request. Often this is simply going to be a URL directly under the domain that the MUD runs on, but this is not a requirement.</p>
+<pre class="highlight http"><code><span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Content-Type</span><span class="p">:</span> <span class="s">application/json</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Example MUD"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"contact"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="s2">"Mud Admin &lt;mudadmin@mud.example.com&gt;"</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nt">"authentication_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"simple"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"websocket_uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"wss://mud.example.com/ws"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"registration_uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://mud.example.com/register"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"tos_uri"</span><span class="w">
+
+</span><span class="err">}</span><span class="w">
+</span></code></pre>
+
+<table><thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>name</td>
+<td>Yes</td>
+<td>The name of the MUD</td>
+</tr>
+<tr>
+<td>contact</td>
+<td>Yes</td>
+<td>List of contact people for administration concerns</td>
+</tr>
+<tr>
+<td>authentication_type</td>
+<td>Yes</td>
+<td>The mechanism to use to authenticate users</td>
+</tr>
+<tr>
+<td>websocket_uri</td>
+<td>Yes</td>
+<td>The URI of the WebSocket endpoint to use for the MUD</td>
+</tr>
+<tr>
+<td>registration_uri</td>
+<td>No</td>
+<td>The URI to use to register new accounts, if supported.</td>
+</tr>
+<tr>
+<td>tos_uri</td>
+<td>No</td>
+<td>The URI to the Terms of Service for using the MUD</td>
+</tr>
+</tbody></table>
 
       </div>
       <div class="dark-box">
           <div class="lang-selector">
-                <a href="#" data-language-name="http">http</a>
                 <a href="#" data-language-name="json">json</a>
           </div>
       </div>
