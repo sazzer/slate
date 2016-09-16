@@ -11,6 +11,7 @@ toc_footers:
 includes:
   - general/introduction
   - general/discovery
+  - auth/authentication
 
 search: true
 ---
