@@ -211,6 +211,190 @@
 </tr>
 </tbody></table>
 
+          <h1 id="authentication">Authentication</h1>
+
+<p>In order to play on a MUD, the server will need to know who you are. This is achieved by the end user authenticating against the MUD server in some form.</p>
+
+<p>There are two standard mechanisms that are supported for authentication, and all servers will use exactly one of these two.</p>
+
+<ul>
+<li>simple - Simple Authentication is the most straightforward, and simply means that the client will collect a username and password from the player, and send them to the server.</li>
+<li>oauth2 - OAuth2 Authentication is more complicated to implement, both for the Server and the Client, but gives advantages in terms of making it more secure regarding how the authentication occurs, making it more flexible what authentication mechanisms can be supported, and making it possible to support federated authentication - i.e. authenticating against a third-party provider.</li>
+</ul>
+
+<p>Note that OpenID Connect as an extension to OAuth2 is both supported and recommended, since this adds some extra details to make the OAuth2 workflow more secure.</p>
+
+<h2 id="authenticating-the-user">Authenticating the user</h2>
+
+<p>All of the REST requests that exist as part of this specification are able to be called without any authentication required at all. It is possible that end servers may define additional endpoints beyond this specification that do require authentication, but that is beyond the scope of this document.</p>
+
+<p>The WebSockets connection does require authentication, and until this is successful no other commands on this connection will be successful. If multiple WebSockets connections are used for any reason then each will need to be individually authenticated.</p>
+
+<p>Authentication on the WebSockets connection is achieved by sending a command message that contains the appropriate details, and waiting for a success or failure response. If an authentication response message is not received within a reasonable timeframe then the connection should be closed and re-established before trying again, as this may mean that messages are not being received correctly.</p>
+
+<h2 id="simple-authentication">Simple Authentication</h2>
+
+<p>Simple Authentication assumes that all users will be identified by a Username and Password pair. This specification makes no requirements on the validity of either Username or Password, but the actual end server may be different.</p>
+
+<p>This is achieved by sending an <em>authenticate</em> command, using a mode of <em>simple</em> to indicate that Simple Authentication is being used.</p>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"authenticate"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"simple"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mudadmin"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"password"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Super5ecretPa55word"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<table><thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>type</td>
+<td>Yes</td>
+<td>Indicates that this is an &ldquo;authenticate&rdquo; command</td>
+</tr>
+<tr>
+<td>mode</td>
+<td>Yes</td>
+<td>Set to &ldquo;simple&rdquo; for Simple Authentication</td>
+</tr>
+<tr>
+<td>username</td>
+<td>Yes</td>
+<td>The username of the user</td>
+</tr>
+<tr>
+<td>password</td>
+<td>Yes</td>
+<td>The password of the user</td>
+</tr>
+</tbody></table>
+
+<h2 id="oauth2-authentication">OAuth2 Authentication</h2>
+
+<p>OAuth2 Authentication assumes that users will be externally authenticated, and that as a result of this a valid OAuth2 Bearer Token will be available. The mechanisms by which this token is obtained are beyond the scope of this document.</p>
+
+<p>TODO: Describe introspection of OAuth2 Authentication
+TODO: Describe scopes of OAuth2 Tokens</p>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"authenticate"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bearer"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"token"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc123"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<table><thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>type</td>
+<td>Yes</td>
+<td>Indicates that this is an &ldquo;authenticate&rdquo; command</td>
+</tr>
+<tr>
+<td>mode</td>
+<td>Yes</td>
+<td>Set to &ldquo;bearer&rdquo; for Bearer Token Authentication</td>
+</tr>
+<tr>
+<td>token</td>
+<td>Yes</td>
+<td>The Bearer Token to use for Authentication</td>
+</tr>
+</tbody></table>
+
+<h2 id="success-response">Success response</h2>
+
+<p>On a successful Authentication, a message will be sent back to the client indicating that the session is now authenticated and other commands can be sent.</p>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"authenticated"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<table><thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>type</td>
+<td>Yes</td>
+<td>Indicates that this is an indication of the authentated state of the client</td>
+</tr>
+<tr>
+<td>state</td>
+<td>Yes</td>
+<td>True indicates that the client is now authenticated</td>
+</tr>
+</tbody></table>
+
+<h2 id="error-response">Error response</h2>
+
+<p>On a failed Authentication, a message will be sent back to the client indicating that the session is not authenticated, and with additional information describing why the authentication failed</p>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"authenticated"</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INVALID_USER"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<table><thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>type</td>
+<td>Yes</td>
+<td>Indicates that this is an indication of the authentated state of the client</td>
+</tr>
+<tr>
+<td>state</td>
+<td>Yes</td>
+<td>False indicates to the client that authentication failed</td>
+</tr>
+<tr>
+<td>reason</td>
+<td>Yes</td>
+<td>An error code describing why authentication failed</td>
+</tr>
+</tbody></table>
+
+<h3 id="error-codes">Error codes</h3>
+
+<table><thead>
+<tr>
+<th>Reason</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>INVALID_USER</td>
+<td>The user credentials - either Username and Password for Simple Authentication, or the Token for OAuth2 Authentication - were not valid. This could indicate that the username or password was incorrect, or the token was malformed or not issued by a trusted provider, or many other reasons that indicate that the credentials are not valid</td>
+</tr>
+<tr>
+<td>UNSUPPORTED_MODE</td>
+<td>The <em>mode</em> parameter was not one of the supported values</td>
+</tr>
+<tr>
+<td>INVALID_REQUEST</td>
+<td>One of the required fields was not present</td>
+</tr>
+</tbody></table>
+
       </div>
       <div class="dark-box">
           <div class="lang-selector">
