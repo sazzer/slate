@@ -2,7 +2,6 @@
 title: WebSocket MUD API
 
 language_tabs:
-  - http
   - json
 
 toc_footers:
